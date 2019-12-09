@@ -36,8 +36,12 @@ def intcode(dataset,phase,inputsignal):
   opcode = get_opcode(dataset[pointer])
   opmode = get_opmode(dataset[pointer])
 
+  if phase == None:
+    inputindex = 1
+  else:
+    inputindex = 0
+
   inputvalue = (phase, inputsignal)
-  inputindex = 0
 
   while opcode != 99:
     if opcode == 1:
@@ -169,13 +173,17 @@ amplifier_chain_list = []
 for combination in amplifier_combination_list:
   amplification_process = True
   output_last_amplifier = 0
+  loopcount=0
 
   while(amplification_process):
 
     inputsignal = output_last_amplifier
 
     for i in combination:
-      phase = i
+      if loopcount != 0:
+        phase = None
+      else:
+        phase = i
       outputsignal = intcode(dataset, phase, inputsignal)
       inputsignal = outputsignal
 
@@ -183,6 +191,8 @@ for combination in amplifier_combination_list:
       output_last_amplifier = outputsignal
     else:
       amplification_process = False
+
+    loopcount = loopcount + 1
  
   amplifier_chain_list.append(output_last_amplifier)
   

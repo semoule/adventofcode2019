@@ -5,9 +5,11 @@ import sys
 import math
 
 ## DATA
-filepath = "./data1.txt"
+filepath = "./data.txt"
 
 ## FUNCTIONS
+
+# check insight
 def check_sight(candidate, anotherone,angle_list):
   angle = get_angle(candidate, anotherone)
   if candidate == anotherone:
@@ -18,17 +20,38 @@ def check_sight(candidate, anotherone,angle_list):
     angle_list.append(angle)
     return True,angle_list
 
+# get angle between 2 asteroids
 def get_angle(candidate, anotherone):
   angle_radian = math.atan2(anotherone[1] - candidate[1], anotherone[0] - candidate[0])
   angle_degrees = math.degrees(angle_radian)
-  #print(candidate,anotherone,angle_degrees)
   return angle_degrees
 
+# get distance between 2 asteroids
 def get_distance(candidate, anotherone):  
   dist = math.sqrt((anotherone[0] - candidate[0])**2 + (anotherone[1] - candidate[1])**2)  
   return dist
 
+# destroy closest asteroid for a given angle 
+def destroy_asteroid(asteroid_pool,angle):
+  asteroid = get_closer(asteroid_pool,angle)
+  if asteroid != None:
+    asteroid_pool.pop(asteroid_pool.index(asteroid))
+  return asteroid_pool,asteroid
+
+# find closest asteroid for a given angle
+def get_closer(asteroid_pool,angle):
+  # filter asteroid_pool by angle
+  matches = list(filter(lambda x: x[1] == angle, asteroid_pool))
+  if len(matches) == 0:
+    asteroid = None
+  else:
+    # get lowest distance
+    matches.sort(key=lambda x: x[2])
+    asteroid = matches[0]
+  return asteroid
+
 ## MAIN
+# read file and get asteroid coordinates
 asteroid_list = []
 y = 0
 with open(filepath) as fp:
@@ -41,8 +64,6 @@ with open(filepath) as fp:
       x = x + 1
     y = y + 1
     line = fp.readline()
-
-#print(asteroid_list)
 
 asteroid_sight_list = []
 angle_list = []
@@ -72,25 +93,28 @@ for asteroid in asteroid_list:
   distance = get_distance(laser, asteroid)
   if asteroid != laser:
     asteroid_info_list.append((asteroid, angle, distance))
-  print(asteroid,angle,distance)
-
-#print(asteroid_info_list)
-#asteroid_info_list.sort(key=lambda x: (x[1], x[2]))
-print()
-print(asteroid_info_list)
+  #print(asteroid,angle,distance)
 
 # create angle list
 angle_list = set(x[1] for x in asteroid_info_list)
-print()
-print("angle_list", angle_list)
-print()
+new_angle_list = sorted(angle_list)
 
-# create list of asteroid for each angle
-asteroid_by_angle_list = []
-i = 0
-for angle in sorted(angle_list):
-  matches = list(filter(lambda x: x[1] == angle, asteroid_info_list))  
-  asteroid_by_angle_list.append(matches)
-  #print(angle,matches)
+# prepare destroy loop
+angle_index = new_angle_list.index(-90)
+destroy_count = 0
+asteroid_pool = asteroid_info_list
 
-print(asteroid_by_angle_list)
+# destroy!
+while len(asteroid_pool) > 1:
+  angle = new_angle_list[angle_index]
+  result = destroy_asteroid(asteroid_pool,angle)
+  asteroid_pool = result[0]
+  destroyed_asteroid = result[1]
+  if destroyed_asteroid != None:
+    destroy_count += 1
+    print("destroy : ",destroy_count, destroyed_asteroid)
+    angle_index +=1
+    if angle_index == len(new_angle_list):
+      angle_index = 0
+  else:
+    break

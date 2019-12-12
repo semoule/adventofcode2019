@@ -45,7 +45,7 @@ def intcode(dataset,phase,inputsignal):
 
   while opcode != 99:
     if opcode == 1:
-      #print("opcode : ",opcode," add       opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
+      print("opcode : ",opcode," add       opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
       if opmode[2] == "0":
         val1 = int(dataset[int(dataset[pointer + 1])])
       else:
@@ -58,7 +58,7 @@ def intcode(dataset,phase,inputsignal):
       pointer = pointer + 4
   
     elif opcode == 2:
-      #print("opcode : ",opcode," multiply  opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
+      print("opcode : ",opcode," multiply  opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
       if opmode[2] == "0":
         val1 = int(dataset[int(dataset[pointer + 1])])
       else:
@@ -71,24 +71,25 @@ def intcode(dataset,phase,inputsignal):
       pointer = pointer + 4
   
     elif opcode == 3:
-      #print("opcode : ",opcode," input     opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1])
+      print("opcode : ",opcode," input     opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1])
       #inval = input("Enter your value: ")
       inval = inputvalue[inputindex]
-      inputindex = inputindex + 1
+      inputindex = 1
       pos1 = int(dataset[pointer + 1])
       dataset[pos1] = int(inval)
       pointer = pointer + 2
   
     elif opcode == 4:
-      #print("opcode : ",opcode," output    opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1])
+      print("opcode : ",opcode," output    opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1])
       pos1 = int(dataset[pointer + 1])
       outval = dataset[pos1]
       #print(outval)
+      #return outval,dataset
       pointer = pointer + 2
   
     #Opcode 5 is jump-if-true: if the first parameter is non-zero, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.
     elif opcode == 5:
-      #print("opcode : ",opcode," jumptrue  opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2])
+      print("opcode : ",opcode," jumptrue  opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2])
       if opmode[2] == "0":
         val1 = int(dataset[int(dataset[pointer + 1])])
       else:
@@ -104,7 +105,7 @@ def intcode(dataset,phase,inputsignal):
     
     #Opcode 6 is jump-if-false: if the first parameter is zero, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.
     elif opcode == 6:
-      #print("opcode : ",opcode," jumpfalse opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2])
+      print("opcode : ",opcode," jumpfalse opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2])
       if opmode[2] == "0":
         val1 = int(dataset[int(dataset[pointer + 1])])
       else:
@@ -120,7 +121,7 @@ def intcode(dataset,phase,inputsignal):
     
     #Opcode 7 is less than: if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
     elif opcode == 7:
-      #print("opcode : ",opcode," lessthan  opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
+      print("opcode : ",opcode," lessthan  opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
       if opmode[2] == "0":
         val1 = int(dataset[int(dataset[pointer + 1])])
       else:
@@ -138,7 +139,7 @@ def intcode(dataset,phase,inputsignal):
   
     #Opcode 8 is equals: if the first parameter is equal to the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
     elif opcode == 8:
-      #print("opcode : ",opcode," equals    opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
+      print("opcode : ",opcode," equals    opmode : ",opmode," raw : ",dataset[pointer],dataset[pointer+1],dataset[pointer+2],dataset[pointer+3])
       if opmode[2] == "0":
         val1 = int(dataset[int(dataset[pointer + 1])])
       else:
@@ -160,7 +161,7 @@ def intcode(dataset,phase,inputsignal):
     opcode = get_opcode(dataset[pointer])
     opmode = get_opmode(dataset[pointer])
   
-  return outval
+  return None,dataset
 
 
 ## MAIN
@@ -171,6 +172,10 @@ amplifier_combination_list = list(itertools.permutations(x, 5))
 
 amplifier_chain_list = []
 for combination in amplifier_combination_list:
+  dataset_amplifier = []
+  for i in range(0, 5):
+    dataset_amplifier.append(dataset)
+
   amplification_process = True
   output_last_amplifier = 0
   loopcount=0
@@ -184,8 +189,12 @@ for combination in amplifier_combination_list:
         phase = None
       else:
         phase = i
-      outputsignal = intcode(dataset, phase, inputsignal)
-      inputsignal = outputsignal
+      outputsignal, dataset_amplifier[i - 5] = intcode(dataset_amplifier[i - 5], phase, inputsignal)
+      if outputsignal == None:
+        break
+      else:
+      #print(dataset_amplifier[i - 5])
+        inputsignal = int(outputsignal)
 
     if outputsignal != None:
       output_last_amplifier = outputsignal

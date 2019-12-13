@@ -85,6 +85,10 @@ while not found:
 
   if set(moon_list) == set(orig_state):
     found = True
-  step +=1
+  step += 1
+  
+  if step % 100000 == 0:
+    print(step, moon_list)
+
 
 print(step)

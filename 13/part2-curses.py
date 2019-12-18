@@ -58,7 +58,7 @@ def get_index(dataset, pointer, opmode, opindex, relativebase):
     print("opmode error : ", opmode)
   return index
 
-def intcode(dataset, pointer, rbase, inval):
+def intcode(dataset, pointer, rbase, inval, stdscr):
   outindex = 0
   lastmove = False
   outval = [0, 0, 0]
@@ -90,6 +90,7 @@ def intcode(dataset, pointer, rbase, inval):
 
     # Opcode 3 takes a single integer as input and saves it to the position given by its only parameter.
     elif opcode == 3:
+      inval, stdscr = joystick(stdscr)
       index1 = get_index(dataset, pointer, opmode, 2, relativebase)
       dataset[index1] = int(inval)
       pointer += 2
@@ -159,7 +160,7 @@ def intcode(dataset, pointer, rbase, inval):
   if opcode == 99:
     lastmove = True
   
-  return outval[0], outval[1], outval[2], dataset, pointer, relativebase, lastmove, game_initialized
+  return outval[0], outval[1], outval[2], dataset, pointer, relativebase, lastmove, stdscr
 
 def get_representation(tile):
   # 0 is an empty tile. No game object appears in this tile.
@@ -182,12 +183,26 @@ def get_representation(tile):
   else:
     # score
     if tile[0] == -1 and tile[1] == 0:
-      representation = tile[2]
-      representation = 'X'
+      representation = str(tile[2])
     else:
       print("tile error")
       representation = ' '
   return representation
+
+def joystick(stdscr):
+  time.sleep(1)
+  c = ""
+  outval = 0
+  try:
+     c = stdscr.getkey()
+     if c == "b": #curses.KEY_LEFT:
+       outval = -1
+     elif c == "n": #curses.KEY_RIGHT:
+       outval = 1
+  except Exception as e:
+     pass
+
+  return outval,stdscr
 
 ## MAIN
 # extend dataset memory
@@ -197,6 +212,8 @@ for i in range(0, 2000):
 stdscr = curses.initscr()
 stdscr.nodelay(1)
 curses.noecho()
+stdscr.keypad(True)
+curses.cbreak()
 
 game_exit = False
 game_initialized = False
@@ -206,34 +223,20 @@ tile_list = []
 inval = 0
 
 while not game_exit:
-  #stdscr.refresh()
-  #stdscr.clear()
-  if game_initialized == True:
-    c = stdscr.getch()
-    if c == -1:
-      inval = 0
-    elif c == "b": #curses.KEY_LEFT:
-      print("left")
-      inval = -1
-    elif c == "n": #curses.KEY_RIGHT:
-      print("right")
-      inval = 1
-    time.sleep(1)
-
-  result = intcode(dataset, pointer, relativebase, inval)
+  result = intcode(dataset, pointer, relativebase, inval, stdscr)
   tile = (result[0], result[1], result[2])
   dataset = result[3]
   pointer = result[4]
   relativebase = result[5]
   game_exit = result[6]
-  game_initialized = result[7]
+  stdscr = result[7]
+
   tile_list.append(tile)
 
-  #stdscr.clear()
+  stdscr.move(0, 0)
   for tile in tile_list:
     tile_representation = get_representation(tile)
-    stdscr.addch(abs(tile[1]), abs(tile[0]), tile_representation)
-  stdscr.refresh()
-  stdscr.move(0, 0)
-
-print(c)
+    if len(tile_representation) == 1:
+      stdscr.addch(abs(tile[1]), abs(tile[0]), tile_representation)
+    else:
+      stdscr.addstr(abs(tile[1]), abs(tile[0]), tile_representation)
